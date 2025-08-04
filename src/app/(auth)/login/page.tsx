@@ -264,7 +264,7 @@ export default function LoginPage() {
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
                 <h1 className="text-4xl font-bold font-heading mb-6">
-                  Supporting Our Veterans
+                  Supporting Our Own
                 </h1>
                 <p className="text-xl text-gray-200 mb-8">
                   Connect with trusted military veteran-owned businesses across all 50 states. 

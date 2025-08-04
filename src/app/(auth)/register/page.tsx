@@ -14,8 +14,7 @@ import {
   PhoneIcon,
   HeartIcon,
   CheckCircleIcon,
-  IdentificationIcon,
-  DocumentTextIcon,
+  DocumentArrowUpIcon,
   BuildingOfficeIcon,
 } from "@heroicons/react/24/outline";
 import { useAuth } from '@/hooks/use-auth';
@@ -34,8 +33,7 @@ export default function RegisterPage() {
     terms: false,
 
     // business-only fields
-    dd14: "",
-    driverLicense: "",
+    dd214File: null as File | null,
     businessName: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -74,15 +72,11 @@ export default function RegisterPage() {
       newErrors.role = "Role is required";
     }
 
-    if(formData.role.trim() === "business" && !formData.dd14.trim()){
-      newErrors.dd14 = "DD14 ID is required";
+    if (formData.role.trim() === "business" && !formData.dd214File) {
+      newErrors.dd214File = "DD214 document upload is required";
     }
 
-    if(formData.role.trim() === "business" && !formData.driverLicense.trim()){
-      newErrors.driverLicense = "Driver license is required";
-    }
-
-    if(formData.role.trim() === "business" && !formData.businessName.trim()){
+    if (formData.role.trim() === "business" && !formData.businessName.trim()) {
       newErrors.businessName = "Business name is required";
     }
 
@@ -150,8 +144,7 @@ export default function RegisterPage() {
       password: formData.password,
       role: roleMapping[formData.role] || formData.role,
       ...(formData.role === 'business' && {
-        dd14: formData.dd14.trim(),
-        driverLicense: formData.driverLicense.trim(),
+        dd214File: formData.dd214File,
         businessName: formData.businessName.trim(),
       })
     };
@@ -175,12 +168,39 @@ export default function RegisterPage() {
     }
   };
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | File | null) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
 
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type and size
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+
+      if (!allowedTypes.includes(file.type)) {
+        setErrors((prev) => ({ 
+          ...prev, 
+          dd214File: "Please upload a PDF, JPG, or PNG file" 
+        }));
+        return;
+      }
+
+      if (file.size > maxSize) {
+        setErrors((prev) => ({ 
+          ...prev, 
+          dd214File: "File size must be less than 5MB" 
+        }));
+        return;
+      }
+
+      handleInputChange("dd214File", file);
     }
   };
 
@@ -209,7 +229,7 @@ export default function RegisterPage() {
                 transition={{ duration: 0.8 }}
               >
                 <h1 className="text-4xl font-bold font-heading mb-6">
-                  Join Our Community
+                  Join The List
                 </h1>
                 <p className="text-xl text-gray-200 mb-8">
                   Whether you're looking for services or own a veteran business,
@@ -390,7 +410,7 @@ export default function RegisterPage() {
                     }`}
                   >
                     <option value="">Select Role</option>
-                    <option value="admin">Admin</option>
+                    {/* <option value="admin">Admin</option> */}
                     <option value="customer">Customer</option>
                     <option value="business">Business Owner</option>
                   </select>
@@ -403,69 +423,46 @@ export default function RegisterPage() {
               {/* Business-specific Fields */}
               {formData.role === "business" && (
                 <>
-                  {/* DD14 ID */}
+                  {/* DD214 File Upload */}
                   <div>
                     <label
-                      htmlFor="dd14"
+                      htmlFor="dd214-upload"
                       className="block text-sm font-medium text-gray-700 mb-1"
                     >
-                      DD14 ID (Military Verification)
+                      DD214 Document Upload (Military Verification)
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <IdentificationIcon className="h-5 w-5 text-gray-400" />
+                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md hover:border-gray-400 transition-colors">
+                      <div className="space-y-1 text-center">
+                        <DocumentArrowUpIcon className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="flex text-sm text-gray-600">
+                          <label
+                            htmlFor="dd214-upload"
+                            className="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500"
+                          >
+                            <span>Upload DD214 document</span>
+                            <input
+                              id="dd214-upload"
+                              name="dd214-upload"
+                              type="file"
+                              className="sr-only"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              onChange={handleFileUpload}
+                            />
+                          </label>
+                          <p className="pl-1">or drag and drop</p>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          PDF, PNG, JPG up to 5MB
+                        </p>
+                        {formData.dd214File && (
+                          <p className="text-sm text-green-600 mt-2">
+                            ✓ {formData.dd214File.name}
+                          </p>
+                        )}
                       </div>
-                      <input
-                        id="dd14"
-                        type="text"
-                        value={formData.dd14}
-                        onChange={(e) =>
-                          handleInputChange("dd14", e.target.value)
-                        }
-                        className={`form-input pl-10 ${
-                          errors.dd14
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                            : ""
-                        }`}
-                        placeholder="Enter DD214 Document Number"
-                      />
                     </div>
-                    {errors.dd14 && (
-                      <p className="mt-1 text-sm text-red-600">{errors.dd14}</p>
-                    )}
-                  </div>
-
-                  {/* Driver License */}
-                  <div>
-                    <label
-                      htmlFor="driver-license"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Driver License Number
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <DocumentTextIcon className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        id="driver-license"
-                        type="text"
-                        value={formData.driverLicense}
-                        onChange={(e) =>
-                          handleInputChange("driverLicense", e.target.value)
-                        }
-                        className={`form-input pl-10 ${
-                          errors.driverLicense
-                            ? "border-red-300 focus:border-red-500 focus:ring-red-500"
-                            : ""
-                        }`}
-                        placeholder="Enter License Number"
-                      />
-                    </div>
-                    {errors.driverLicense && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.driverLicense}
-                      </p>
+                    {errors.dd214File && (
+                      <p className="mt-1 text-sm text-red-600">{errors.dd214File}</p>
                     )}
                   </div>
 
@@ -544,6 +541,70 @@ export default function RegisterPage() {
                 >
                   Password
                 </label>
+                
+                {/* Password Requirements - Always Visible */}
+                <div className="mb-3 p-3 bg-gray-50 rounded-lg border">
+                  <p className="text-xs font-medium text-gray-700 mb-2">Password must contain:</p>
+                  <div className="space-y-1 text-xs">
+                    <div className={`flex items-center space-x-2 ${
+                      formData.password.length >= 8 ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        formData.password.length >= 8 
+                          ? 'bg-green-500 border-green-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {formData.password.length >= 8 && (
+                          <CheckCircleIcon className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <span>At least 8 characters</span>
+                    </div>
+                    <div className={`flex items-center space-x-2 ${
+                      /[a-z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        /[a-z]/.test(formData.password) 
+                          ? 'bg-green-500 border-green-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {/[a-z]/.test(formData.password) && (
+                          <CheckCircleIcon className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <span>One lowercase letter</span>
+                    </div>
+                    <div className={`flex items-center space-x-2 ${
+                      /[A-Z]/.test(formData.password) ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        /[A-Z]/.test(formData.password) 
+                          ? 'bg-green-500 border-green-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {/[A-Z]/.test(formData.password) && (
+                          <CheckCircleIcon className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <span>One uppercase letter</span>
+                    </div>
+                    <div className={`flex items-center space-x-2 ${
+                      /\d/.test(formData.password) ? 'text-green-600' : 'text-gray-500'
+                    }`}>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        /\d/.test(formData.password) 
+                          ? 'bg-green-500 border-green-500' 
+                          : 'border-gray-300'
+                      }`}>
+                        {/\d/.test(formData.password) && (
+                          <CheckCircleIcon className="w-3 h-3 text-white" />
+                        )}
+                      </div>
+                      <span>One number</span>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <LockClosedIcon className="h-5 w-5 text-gray-400" />
@@ -575,6 +636,7 @@ export default function RegisterPage() {
                     )}
                   </button>
                 </div>
+                
                 {/* Password Strength Indicator */}
                 {formData.password && (
                   <div className="mt-2">

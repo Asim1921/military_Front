@@ -80,49 +80,105 @@ export default function HomePage() {
     <div className="min-h-screen bg-white">
       <Header />
       
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-900 via-military-800 to-veteran-900 text-white">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative container-custom py-20 lg:py-32">
-          <motion.div 
-            className="max-w-4xl mx-auto text-center"
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.h1 
-              className="text-4xl md:text-6xl font-bold font-heading mb-6"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              Connect with{' '}
-              <span className="text-yellow-400">Trusted</span>{' '}
-              Military Veteran Businesses
-            </motion.h1>
-            
-            <motion.p 
-              className="text-xl md:text-2xl text-gray-200 mb-12 max-w-3xl mx-auto"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-            >
-              Find reliable service providers who understand your values. 
-              Supporting veteran-owned businesses across all 50 states.
-            </motion.p>
+ {/* Hero Section */}
+<section className="relative bg-gradient-to-br from-primary-900 via-military-800 to-veteran-900 text-white">
+  <div className="absolute inset-0 bg-black/20"></div>
+  <div className="relative container-custom py-20 lg:py-32">
+    <motion.div 
+      className="max-w-4xl mx-auto text-center"
+      initial={{ opacity: 0, y: 60 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+    >
+      <motion.h1 
+        className="text-4xl md:text-6xl font-bold font-heading mb-6"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+      >
+        Because No one will take care of your home and significant other while you're in the field like{' '}
+        <span className="text-yellow-400">Jodi!</span>
+      </motion.h1>
+      
+      <motion.p 
+        className="text-xl md:text-2xl text-gray-200 mb-12 max-w-3xl mx-auto"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+      >
+        Find reliable service providers who understand your values. 
+        Supporting veteran-owned businesses across all 50 states.
+      </motion.p>
 
+  
             {/* Hero Search */}
             <motion.div 
-              className="max-w-2xl mx-auto mb-12"
+              className="max-w-4xl mx-auto mb-12"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.6 }}
             >
-              <SearchBar 
-                placeholder="Search for services (plumbing, legal, HVAC...)"
-                showLocation={true}
-                className="bg-white/95 backdrop-blur"
-              />
+              {/* Main Search Container */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+                <div className="flex flex-col lg:flex-row">
+                  {/* Service Search Input */}
+                  <div className="flex-1 relative">
+                    <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                      <MagnifyingGlassIcon className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search for services (plumbing, legal, HVAC...)"
+                      className="w-full h-16 pl-16 pr-6 text-lg text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none"
+                    />
+                  </div>
+                  
+                  {/* Divider */}
+                  <div className="hidden lg:block w-px bg-gray-200 my-3"></div>
+                  
+                  {/* Location Input */}
+                  <div className="lg:w-80 relative">
+                    <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                      <MapPinIcon className="h-6 w-6 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="City, State or ZIP"
+                      className="w-full h-16 pl-16 pr-20 text-lg text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none lg:border-l lg:border-gray-200"
+                    />
+                    {/* GPS Button */}
+                    <button className="absolute inset-y-0 right-6 flex items-center text-primary-600 hover:text-primary-700 transition-colors">
+                      <span className="text-sm font-medium">GPS</span>
+                    </button>
+                  </div>
+                  
+                  {/* Search Button */}
+                  <div className="lg:w-auto">
+                    <button className="w-full lg:w-auto h-16 px-8 lg:px-12 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold text-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-200">
+                      Search
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Popular Services Tags */}
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                {[
+                  'Plumbing', 
+                  'HVAC', 
+                  'Legal Services', 
+                  'Electrical', 
+                  'Security', 
+                  'Event Planning'
+                ].map((service) => (
+                  <button
+                    key={service}
+                    className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-full hover:bg-white/20 hover:border-white/30 transition-all duration-200 text-sm font-medium"
+                  >
+                    {service}
+                  </button>
+                ))}
+              </div>
             </motion.div>
 
             {/* Quick Stats */}
@@ -213,10 +269,10 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold font-heading text-gray-900 mb-4">
-              Featured Veteran Businesses
+              Are you a Veteran Owned Business? Get featured here! 
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Discover highly-rated, verified businesses owned by military veterans
+             If you have a DD214, there is absolutely no cost to you! We just want to help the veteran community find veteran owned businesses to work with! We gotta support each other and keep it all in the family!  
             </p>
           </motion.div>
 
@@ -281,7 +337,7 @@ export default function HomePage() {
               Why Choose Jodi's List?
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Supporting those who served while getting quality service
+             Because no one is going to take care of the Vetern Community like the Vetern Community!
             </p>
           </motion.div>
 
@@ -294,18 +350,18 @@ export default function HomePage() {
             {[
               {
                 icon: ShieldCheckIcon,
-                title: 'Verified Veterans',
+                title: 'No Stolen Valor here',
                 description: 'All businesses are verified military veteran-owned with proper documentation.'
               },
               {
                 icon: StarIcon,
-                title: 'Quality Guaranteed',
-                description: 'Read real reviews from customers and choose with confidence.'
+                title: 'Always 100% free for Veterns',
+                description: 'There is no cost to use Jodi List. Our goal is to be the connective tissue that brings everyone together'
               },
               {
                 icon: UsersIcon,
-                title: 'Supporting Heroes',
-                description: 'Every hire directly supports veterans transitioning to civilian careers.'
+                title: 'Supporting the Community',
+                description: 'We as a Vetern Community needs to take care of each other and support each other'
               }
             ].map((feature, index) => (
               <motion.div
@@ -352,7 +408,7 @@ export default function HomePage() {
               </Link>
               <Link 
                 href="/register"
-                className="btn-secondary border-white text-white hover:bg-white/10"
+                className="btn-primary bg-white text-primary-600 hover:bg-gray-100"
               >
                 List Your Business
               </Link>
