@@ -5,37 +5,36 @@ import { HeartIcon } from '@heroicons/react/24/outline';
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
-  const footerLinks = {
-    'For Customers': [
-      { name: 'Browse Businesses', href: '/businesses' },
-      { name: 'Search Services', href: '/search' },
-      { name: 'Categories', href: '/categories' },
-      { name: 'How It Works', href: '/how-it-works' },
-    ],
-    'For Business Owners': [
-      { name: 'List Your Business', href: '/register' },
-      { name: 'Business Dashboard', href: '/dashboard/business' },
-      { name: 'Pricing', href: '/pricing' },
-      { name: 'Success Stories', href: '/success-stories' },
-    ],
-    'Support': [
-      { name: 'Help Center', href: '/help' },
-      { name: 'Contact Us', href: '/contact' },
-      { name: 'Report an Issue', href: '/report' },
-      { name: 'Safety Guidelines', href: '/safety' },
-    ],
-    'Company': [
-      { name: 'About Us', href: '/about' },
-      { name: 'Our Mission', href: '/mission' },
-      { name: 'Veterans Program', href: '/veterans' },
-      { name: 'Careers', href: '/careers' },
-    ],
-    'Legal': [
-      { name: 'Privacy Policy', href: '/privacy' },
-      { name: 'Terms of Service', href: '/terms' },
-      { name: 'Cookie Policy', href: '/cookies' },
-      { name: 'Accessibility', href: '/accessibility' },
-    ],
+ const footerLinks = {
+  'For Customers': [
+    { name: 'Browse Businesses', href: '/businesses' },
+    { name: 'Search Services', href: '/search' },
+    { name: 'Categories', href: '/categories' },
+    { name: 'How It Works', href: '/how-it-works' },
+  ],
+  'For Business Owners': [
+    { name: 'List Your Business', href: '/register' },
+    { name: 'Business Dashboard', href: '/dashboard/business' },
+    { name: 'Pricing', href: '/pricing' },
+
+  ],
+  'Support': [
+    { name: 'Help Center', href: '/help' },
+    { name: 'Contact Us', href: '/contact' },
+    { name: 'Report an Issue', href: '/report' },
+    { name: 'Safety Guidelines', href: '/safety' },
+  ],
+  'Company': [
+    { name: 'About Us', href: '/about' },
+    { name: 'Our Mission', href: '/mission' },
+    { name: 'Veterans Program', href: '/veterans' },
+  ],
+  'Legal': [
+    { name: 'Privacy Policy', href: '/privacy' },
+    { name: 'Terms of Service', href: '/terms' },
+    { name: 'Cookie Policy', href: '/cookies' },
+    { name: 'Accessibility', href: '/accessibility' },
+  ],
   };
 
   const socialLinks = [

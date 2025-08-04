@@ -27,7 +27,7 @@ export function Header() {
     { name: 'Home', href: '/' },
     { name: 'Browse Businesses', href: '/businesses' },
     { name: 'Categories', href: '/categories' },
-    { name: 'Search', href: '/search' },
+    { name: 'About', href: '/about' },
   ];
 
   const userNavigation = user ? [
