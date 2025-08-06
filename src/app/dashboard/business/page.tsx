@@ -31,6 +31,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
 import { formatDate, timeAgo } from '@/lib/utils';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 import toast from 'react-hot-toast';
 
 interface BusinessStats {
@@ -60,6 +61,174 @@ interface RecentReview {
   responded: boolean;
 }
 
+// Analytics Chart Component
+const AnalyticsChart = ({ stats }: { stats: BusinessStats }) => {
+  // Sample data for the last 30 days
+  const viewsData = [
+    { date: '2024-01-01', views: 45, inquiries: 2, clicks: 8 },
+    { date: '2024-01-05', views: 52, inquiries: 3, clicks: 12 },
+    { date: '2024-01-10', views: 38, inquiries: 1, clicks: 6 },
+    { date: '2024-01-15', views: 67, inquiries: 4, clicks: 15 },
+    { date: '2024-01-20', views: 73, inquiries: 5, clicks: 18 },
+    { date: '2024-01-25', views: 61, inquiries: 3, clicks: 14 },
+    { date: '2024-01-30', views: 89, inquiries: 6, clicks: 22 }
+  ];
+
+  const trafficSourcesData = [
+    { name: 'Direct Search', value: 45, color: '#3B82F6' },
+    { name: 'Google Maps', value: 30, color: '#10B981' },
+    { name: 'Referrals', value: 15, color: '#F59E0B' },
+    { name: 'Social Media', value: 10, color: '#8B5CF6' }
+  ];
+
+  const inquiryTypesData = [
+    { type: 'Emergency Service', count: 8 },
+    { type: 'Quote Request', count: 6 },
+    { type: 'General Inquiry', count: 5 },
+    { type: 'Appointment', count: 4 }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Views and Engagement Over Time */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Profile Performance</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={viewsData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis 
+              dataKey="date" 
+              tick={{ fontSize: 12 }}
+              tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            />
+            <YAxis tick={{ fontSize: 12 }} />
+            <Tooltip 
+              labelFormatter={(value) => new Date(value).toLocaleDateString()}
+              formatter={(value: any, name: string) => [
+                value,
+                name === 'views' ? 'Profile Views' : 
+                name === 'inquiries' ? 'Inquiries' : 'Contact Clicks'
+              ]}
+              contentStyle={{ 
+                backgroundColor: '#fff', 
+                border: '1px solid #e5e7eb',
+                borderRadius: '6px'
+              }}
+            />
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="views" 
+              stroke="#3B82F6" 
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              name="Profile Views"
+            />
+            <Line 
+              type="monotone" 
+              dataKey="inquiries" 
+              stroke="#10B981" 
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              name="Inquiries"
+            />
+            <Line 
+              type="monotone" 
+              dataKey="clicks" 
+              stroke="#F59E0B" 
+              strokeWidth={2}
+              dot={{ r: 4 }}
+              name="Contact Clicks"
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Traffic Sources */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Traffic Sources</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <PieChart>
+              <Pie
+                data={trafficSourcesData}
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                dataKey="value"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                labelLine={false}
+              >
+                {trafficSourcesData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(value: any) => [`${value}%`, 'Percentage']} />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Inquiry Types */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Inquiry Categories</h3>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={inquiryTypesData} layout="horizontal">
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis type="number" tick={{ fontSize: 12 }} />
+              <YAxis 
+                type="category" 
+                dataKey="type" 
+                tick={{ fontSize: 12 }}
+                width={100}
+              />
+              <Tooltip 
+                formatter={(value: any) => [value, 'Count']}
+                contentStyle={{ 
+                  backgroundColor: '#fff', 
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '6px'
+                }}
+              />
+              <Bar dataKey="count" fill="#3B82F6" radius={[0, 4, 4, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Key Metrics Summary */}
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Summary</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">
+              {((viewsData[viewsData.length - 1].views - viewsData[0].views) / viewsData[0].views * 100).toFixed(1)}%
+            </div>
+            <div className="text-sm text-gray-600">Views Growth</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">
+              {stats.responseRate}%
+            </div>
+            <div className="text-sm text-gray-600">Response Rate</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-yellow-600">
+              {stats.averageRating.toFixed(1)}
+            </div>
+            <div className="text-sm text-gray-600">Avg Rating</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-purple-600">
+              {((stats.totalInquiries / stats.totalViews) * 100).toFixed(1)}%
+            </div>
+            <div className="text-sm text-gray-600">Conversion Rate</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 function BusinessDashboardPage() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
@@ -83,83 +252,30 @@ function BusinessDashboardPage() {
   const fetchBusinessData = async () => {
     setLoading(true);
     try {
-      // Mock data - replace with actual API calls
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock business data
-      setBusiness({
-        id: 1,
-        business_name: "Smith Plumbing Services",
-        slug: "smith-plumbing",
-        description: "Professional plumbing services with over 15 years of experience. We specialize in residential and commercial plumbing installations, repairs, and emergency services.",
-        business_phone: "15551001",
-        business_email: "info@smithplumbing.com",
-        website_url: "https://smithplumbing.com",
-        full_address: "123 Main Street, Austin, TX 73301",
-        city: "Austin",
-        state: "TX",
-        average_rating: 4.8,
-        total_reviews: 45,
-        featured: true,
-        verified: true,
-        military_owned: true,
-        business_status: "approved",
-        emergency_service: true,
-        insured: true,
-        owner: { name: "John Smith", membership_status: "veteran" },
-        categories: [
-          { id: 1, name: "Plumbing", icon_class: "fas fa-wrench" },
-          { id: 2, name: "Emergency Plumbing", icon_class: "fas fa-water" }
-        ],
-        created_at: "2024-01-15T10:00:00Z"
-      });
+      // TODO: Replace with actual API calls
+      // const businessResponse = await api.businesses.getUserBusiness();
+      // const statsResponse = await api.analytics.getBusinessStats();
+      // const inquiriesResponse = await api.inquiries.getRecent();
+      // const reviewsResponse = await api.reviews.getRecent();
 
-      setStats({
-        totalViews: 1247,
-        totalInquiries: 23,
-        totalReviews: 45,
-        averageRating: 4.8,
-        responseRate: 95,
-        profileCompleteness: 85
-      });
-
-      setRecentInquiries([
-        {
-          id: 1,
-          customer_name: 'Sarah Johnson',
-          subject: 'Emergency Water Leak',
-          message: 'Hi, I have a water leak in my kitchen and need immediate assistance. Can you help today?',
-          created_at: '2024-01-20T14:30:00Z',
-          status: 'pending'
-        },
-        {
-          id: 2,
-          customer_name: 'Mike Davis',
-          subject: 'Bathroom Renovation Quote',
-          message: 'Looking for a quote on complete bathroom plumbing for a renovation project.',
-          created_at: '2024-01-19T09:15:00Z',
-          status: 'responded'
-        }
-      ]);
-
-      setRecentReviews([
-        {
-          id: 1,
-          customer_name: 'Jennifer Wilson',
-          rating: 5,
-          review_text: 'Excellent service! John was professional, on time, and fixed our plumbing issue quickly.',
-          created_at: '2024-01-18T16:45:00Z',
-          responded: false
-        },
-        {
-          id: 2,
-          customer_name: 'Robert Brown',
-          rating: 5,
-          review_text: 'Great work and fair pricing. Highly recommend Smith Plumbing for any plumbing needs.',
-          created_at: '2024-01-17T11:20:00Z',
-          responded: true
-        }
-      ]);
+      // For now, we'll check if user has a business and show appropriate state
+      if (user?.has_business) {
+        // When user has a business, fetch real data
+        // setBusiness(businessResponse.data);
+        // setStats(statsResponse.data);
+        // setRecentInquiries(inquiriesResponse.data);
+        // setRecentReviews(reviewsResponse.data);
+        
+        // Temporary sample data structure - replace with real API response
+        setStats({
+          totalViews: 425,
+          totalInquiries: 23,
+          totalReviews: 12,
+          averageRating: 4.6,
+          responseRate: 95,
+          profileCompleteness: 75
+        });
+      }
 
     } catch (error) {
       console.error('Error fetching business data:', error);
@@ -179,6 +295,13 @@ function BusinessDashboardPage() {
   };
 
   const getProfileCompletionTasks = () => {
+    if (!business) return [
+      { task: 'Create your business profile', points: 50 },
+      { task: 'Add business description', points: 15 },
+      { task: 'Upload business photos', points: 20 },
+      { task: 'Add contact information', points: 15 }
+    ];
+
     const tasks = [];
     if (!business?.description || business.description.length < 100) {
       tasks.push({ task: 'Add detailed business description', points: 15 });
@@ -245,6 +368,63 @@ function BusinessDashboardPage() {
     { id: 'reviews', name: 'Reviews', icon: StarIcon },
     { id: 'analytics', name: 'Analytics', icon: EyeIcon },
   ];
+
+  // No Business State
+  if (!loading && (!user?.has_business)) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        
+        <div className="container-custom py-16">
+          <div className="text-center max-w-2xl mx-auto">
+            <BuildingOfficeIcon className="h-16 w-16 text-gray-400 mx-auto mb-6" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              Create Your Business Profile
+            </h1>
+            <p className="text-lg text-gray-600 mb-8">
+              Start connecting with customers by creating your business profile on Jodi's List. 
+              It's free for all verified military veterans.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/businesses/create" className="btn-primary">
+                Create Business Profile
+              </Link>
+              <Link href="/help" className="btn-secondary">
+                Learn More
+              </Link>
+            </div>
+            
+            {/* Benefits of Creating Profile */}
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
+                <UsersIcon className="h-8 w-8 text-primary-600 mx-auto mb-3" />
+                <h3 className="font-semibold text-gray-900 mb-2">Reach More Customers</h3>
+                <p className="text-sm text-gray-600">
+                  Get discovered by customers looking for veteran-owned businesses
+                </p>
+              </div>
+              <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
+                <ChatBubbleLeftRightIcon className="h-8 w-8 text-primary-600 mx-auto mb-3" />
+                <h3 className="font-semibold text-gray-900 mb-2">Manage Inquiries</h3>
+                <p className="text-sm text-gray-600">
+                  Receive and respond to customer inquiries directly through our platform
+                </p>
+              </div>
+              <div className="text-center p-6 bg-white rounded-lg border border-gray-200">
+                <ChartBarIcon className="h-8 w-8 text-primary-600 mx-auto mb-3" />
+                <h3 className="font-semibold text-gray-900 mb-2">Track Performance</h3>
+                <p className="text-sm text-gray-600">
+                  Get insights on your profile views, customer engagement, and growth
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -318,15 +498,21 @@ function BusinessDashboardPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Profile Status:</span>
-                  <span className="text-green-600 font-medium">Active</span>
+                  <span className="text-green-600 font-medium">
+                    {business?.business_status || 'Pending'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Verification:</span>
-                  <span className="text-green-600 font-medium">Verified</span>
+                  <span className={`font-medium ${business?.verified ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {business?.verified ? 'Verified' : 'Pending'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Military Status:</span>
-                  <span className="text-blue-600 font-medium">Veteran Owned</span>
+                  <span className="text-blue-600 font-medium">
+                    {user?.membership_status === 'veteran' ? 'Veteran Owned' : 'Military Connected'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -428,67 +614,224 @@ function BusinessDashboardPage() {
                       </div>
                     </div>
 
-                    {/* Recent Inquiries */}
-                    <div className="bg-white rounded-lg border border-gray-200">
-                      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-900">Recent Inquiries</h2>
-                        <button
-                          onClick={() => setActiveTab('inquiries')}
-                          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                        >
-                          View all
-                        </button>
+                    {/* Recent Activity Placeholder */}
+                    <div className="bg-white rounded-lg border border-gray-200 p-6">
+                      <h2 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h2>
+                      <div className="text-center py-8 text-gray-500">
+                        <ChatBubbleLeftRightIcon className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No recent activity to display.</p>
+                        <p className="text-sm mt-1">Inquiries and reviews will appear here.</p>
                       </div>
-                      <div className="divide-y divide-gray-200">
-                        {recentInquiries.slice(0, 3).map((inquiry) => (
-                          <div key={inquiry.id} className="px-6 py-4 hover:bg-gray-50">
-                            <div className="flex items-start justify-between">
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'profile' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold text-gray-900">Business Profile</h2>
+                      <div className="flex gap-3">
+                        {business && (
+                          <Link
+                            href={`/businesses/${business.slug}`}
+                            className="btn-secondary flex items-center gap-2"
+                            target="_blank"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                            Preview
+                          </Link>
+                        )}
+                        <Link
+                          href="/businesses/edit"
+                          className="btn-primary flex items-center gap-2"
+                        >
+                          <PencilIcon className="h-4 w-4" />
+                          {business ? 'Edit Profile' : 'Create Profile'}
+                        </Link>
+                      </div>
+                    </div>
+
+                    {business ? (
+                      <>
+                        {/* Profile Information */}
+                        <div className="bg-white rounded-lg border border-gray-200 p-6">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Business Name
+                              </label>
+                              <p className="text-gray-900">{business.business_name}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Phone Number
+                              </label>
+                              <p className="text-gray-900">{business.business_phone}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Email Address
+                              </label>
+                              <p className="text-gray-900">{business.business_email}</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Website
+                              </label>
+                              <p className="text-gray-900">{business.website_url || 'Not provided'}</p>
+                            </div>
+                            <div className="lg:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Description
+                              </label>
+                              <p className="text-gray-900">{business.description}</p>
+                            </div>
+                            <div className="lg:col-span-2">
+                              <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Address
+                              </label>
+                              <p className="text-gray-900">{business.full_address}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Business Categories */}
+                        <div className="bg-white rounded-lg border border-gray-200 p-6">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Categories</h3>
+                          <div className="flex flex-wrap gap-2">
+                            {business.categories.map((category) => (
+                              <span
+                                key={category.id}
+                                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800"
+                              >
+                                <i className={`${category.icon_class} mr-2`}></i>
+                                {category.name}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Business Features */}
+                        <div className="bg-white rounded-lg border border-gray-200 p-6">
+                          <h3 className="text-lg font-medium text-gray-900 mb-4">Business Features</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="flex items-center">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                              <span className="text-sm text-gray-700">Verified</span>
+                            </div>
+                            <div className="flex items-center">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                              <span className="text-sm text-gray-700">Military Owned</span>
+                            </div>
+                            <div className="flex items-center">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                              <span className="text-sm text-gray-700">Emergency Service</span>
+                            </div>
+                            <div className="flex items-center">
+                              <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
+                              <span className="text-sm text-gray-700">Insured</span>
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                        <BuildingOfficeIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Business Profile Yet
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          Create your business profile to start connecting with customers.
+                        </p>
+                        <Link href="/businesses/create" className="btn-primary">
+                          Create Business Profile
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'inquiries' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold text-gray-900">Customer Inquiries</h2>
+                      <div className="text-sm text-gray-600">
+                        {recentInquiries.filter(i => i.status === 'pending').length} pending responses
+                      </div>
+                    </div>
+
+                    {recentInquiries.length > 0 ? (
+                      <div className="space-y-4">
+                        {recentInquiries.map((inquiry) => (
+                          <div key={inquiry.id} className="bg-white rounded-lg border border-gray-200 p-6">
+                            <div className="flex items-start justify-between mb-4">
                               <div className="flex-1">
-                                <div className="flex items-center space-x-3">
-                                  <h3 className="text-sm font-medium text-gray-900">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h3 className="text-lg font-medium text-gray-900">
                                     {inquiry.customer_name}
                                   </h3>
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(inquiry.status)}`}>
                                     {inquiry.status}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1">{inquiry.subject}</p>
-                                <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-                                  {inquiry.message}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-2">
-                                  {timeAgo(inquiry.created_at)}
+                                <p className="text-sm text-gray-600 mb-2">{inquiry.subject}</p>
+                                <p className="text-sm text-gray-500 mb-2">{inquiry.message}</p>
+                                <p className="text-xs text-gray-400">
+                                  {formatDate(inquiry.created_at)}
                                 </p>
                               </div>
-                              {inquiry.status === 'pending' && (
-                                <button className="ml-4 btn-primary text-sm">
-                                  Respond
+                              <div className="flex gap-2 ml-4">
+                                {inquiry.status === 'pending' && (
+                                  <button className="btn-primary">
+                                    Respond
+                                  </button>
+                                )}
+                                <button className="btn-secondary">
+                                  View Details
                                 </button>
-                              )}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-
-                    {/* Recent Reviews */}
-                    <div className="bg-white rounded-lg border border-gray-200">
-                      <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                        <h2 className="text-lg font-semibold text-gray-900">Recent Reviews</h2>
+                    ) : (
+                      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                        <ChatBubbleLeftRightIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Inquiries Yet
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          Customer inquiries will appear here when you receive them.
+                        </p>
                         <button
-                          onClick={() => setActiveTab('reviews')}
-                          className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                          onClick={() => setActiveTab('profile')}
+                          className="btn-primary"
                         >
-                          View all
+                          Complete Your Profile
                         </button>
                       </div>
-                      <div className="divide-y divide-gray-200">
-                        {recentReviews.slice(0, 3).map((review) => (
-                          <div key={review.id} className="px-6 py-4 hover:bg-gray-50">
-                            <div className="flex items-start justify-between">
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'reviews' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+                      <div className="text-sm text-gray-600">
+                        {stats.averageRating.toFixed(1)} average rating • {stats.totalReviews} reviews
+                      </div>
+                    </div>
+
+                    {recentReviews.length > 0 ? (
+                      <div className="space-y-4">
+                        {recentReviews.map((review) => (
+                          <div key={review.id} className="bg-white rounded-lg border border-gray-200 p-6">
+                            <div className="flex items-start justify-between mb-4">
                               <div className="flex-1">
-                                <div className="flex items-center space-x-3">
-                                  <h3 className="text-sm font-medium text-gray-900">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h3 className="text-lg font-medium text-gray-900">
                                     {review.customer_name}
                                   </h3>
                                   <div className="flex items-center">
@@ -502,220 +845,39 @@ function BusinessDashboardPage() {
                                     ))}
                                   </div>
                                 </div>
-                                <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                                  {review.review_text}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-2">
-                                  {timeAgo(review.created_at)}
+                                <p className="text-gray-700 mb-2">{review.review_text}</p>
+                                <p className="text-xs text-gray-400">
+                                  {formatDate(review.created_at)}
                                 </p>
                               </div>
-                              {!review.responded && (
-                                <button className="ml-4 btn-secondary text-sm">
-                                  Respond
-                                </button>
-                              )}
+                              <div className="flex gap-2 ml-4">
+                                {!review.responded && (
+                                  <button className="btn-primary">
+                                    Respond
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'profile' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-gray-900">Business Profile</h2>
-                      <div className="flex gap-3">
-                        <Link
-                          href={`/businesses/${business?.slug}`}
-                          className="btn-secondary flex items-center gap-2"
-                          target="_blank"
+                    ) : (
+                      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                        <StarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Reviews Yet
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          Customer reviews will appear here after you complete your first jobs.
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('profile')}
+                          className="btn-primary"
                         >
-                          <EyeIcon className="h-4 w-4" />
-                          Preview
-                        </Link>
-                        <button className="btn-primary flex items-center gap-2">
-                          <PencilIcon className="h-4 w-4" />
-                          Edit Profile
+                          Get Your First Customers
                         </button>
                       </div>
-                    </div>
-
-                    {/* Profile Information */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Business Information</h3>
-                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Business Name
-                          </label>
-                          <p className="text-gray-900">{business?.business_name}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Phone Number
-                          </label>
-                          <p className="text-gray-900">{business?.business_phone}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email Address
-                          </label>
-                          <p className="text-gray-900">{business?.business_email}</p>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Website
-                          </label>
-                          <p className="text-gray-900">{business?.website_url || 'Not provided'}</p>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Description
-                          </label>
-                          <p className="text-gray-900">{business?.description}</p>
-                        </div>
-                        <div className="lg:col-span-2">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Address
-                          </label>
-                          <p className="text-gray-900">{business?.full_address}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Business Categories */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Categories</h3>
-                      <div className="flex flex-wrap gap-2">
-                        {business?.categories.map((category) => (
-                          <span
-                            key={category.id}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800"
-                          >
-                            <i className={`${category.icon_class} mr-2`}></i>
-                            {category.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Business Features */}
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Business Features</h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="flex items-center">
-                          <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Verified</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Military Owned</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Emergency Service</span>
-                        </div>
-                        <div className="flex items-center">
-                          <CheckCircleIcon className="h-5 w-5 text-green-500 mr-2" />
-                          <span className="text-sm text-gray-700">Insured</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'inquiries' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-gray-900">Customer Inquiries</h2>
-                      <div className="text-sm text-gray-600">
-                        {recentInquiries.filter(i => i.status === 'pending').length} pending responses
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {recentInquiries.map((inquiry) => (
-                        <div key={inquiry.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <h3 className="text-lg font-medium text-gray-900">
-                                  {inquiry.customer_name}
-                                </h3>
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(inquiry.status)}`}>
-                                  {inquiry.status}
-                                </span>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-2">{inquiry.subject}</p>
-                              <p className="text-sm text-gray-500 mb-2">{inquiry.message}</p>
-                              <p className="text-xs text-gray-400">
-                                {formatDate(inquiry.created_at)}
-                              </p>
-                            </div>
-                            <div className="flex gap-2 ml-4">
-                              {inquiry.status === 'pending' && (
-                                <button className="btn-primary">
-                                  Respond
-                                </button>
-                              )}
-                              <button className="btn-secondary">
-                                View Details
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {activeTab === 'reviews' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
-                      <div className="text-sm text-gray-600">
-                        {stats.averageRating.toFixed(1)} average rating • {stats.totalReviews} reviews
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {recentReviews.map((review) => (
-                        <div key={review.id} className="bg-white rounded-lg border border-gray-200 p-6">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-2">
-                                <h3 className="text-lg font-medium text-gray-900">
-                                  {review.customer_name}
-                                </h3>
-                                <div className="flex items-center">
-                                  {[...Array(5)].map((_, i) => (
-                                    <StarIconSolid
-                                      key={i}
-                                      className={`h-4 w-4 ${
-                                        i < review.rating ? 'text-yellow-400' : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                              <p className="text-gray-700 mb-2">{review.review_text}</p>
-                              <p className="text-xs text-gray-400">
-                                {formatDate(review.created_at)}
-                              </p>
-                            </div>
-                            <div className="flex gap-2 ml-4">
-                              {!review.responded && (
-                                <button className="btn-primary">
-                                  Respond
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                    )}
                   </div>
                 )}
 
@@ -741,32 +903,51 @@ function BusinessDashboardPage() {
                       <StatCard
                         icon={UsersIcon}
                         title="Unique Visitors"
-                        value="892"
+                        value={Math.floor(stats.totalViews * 0.72).toLocaleString()}
                         description="Unique visitors"
                         color="green"
                       />
                       <StatCard
                         icon={PhoneIcon}
                         title="Phone Clicks"
-                        value="156"
+                        value={Math.floor(stats.totalViews * 0.15).toString()}
                         description="Phone number clicks"
                         color="purple"
                       />
                       <StatCard
                         icon={EnvelopeIcon}
                         title="Email Clicks"
-                        value="89"
+                        value={Math.floor(stats.totalViews * 0.08).toString()}
                         description="Email clicks"
                         color="red"
                       />
                     </div>
 
-                    <div className="bg-white rounded-lg border border-gray-200 p-6">
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Performance Overview</h3>
-                      <div className="h-64 flex items-center justify-center text-gray-500">
-                        Analytics chart would go here
+                    {/* Analytics Charts */}
+                    {stats.totalViews > 0 ? (
+                      <AnalyticsChart stats={stats} />
+                    ) : (
+                      <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                        <ChartBarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          No Analytics Data Yet
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                          Analytics will appear here once customers start viewing your profile.
+                        </p>
+                        <div className="flex justify-center gap-3">
+                          <button
+                            onClick={() => setActiveTab('profile')}
+                            className="btn-primary"
+                          >
+                            Complete Profile
+                          </button>
+                          <Link href="/help/marketing" className="btn-secondary">
+                            Marketing Tips
+                          </Link>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </>

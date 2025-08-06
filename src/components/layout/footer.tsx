@@ -12,12 +12,12 @@ export function Footer() {
     { name: 'Categories', href: '/categories' },
     { name: 'How It Works', href: '/how-it-works' },
   ],
-  'For Business Owners': [
-    { name: 'List Your Business', href: '/register' },
-    { name: 'Business Dashboard', href: '/dashboard/business' },
-    { name: 'Pricing', href: '/pricing' },
-
-  ],
+'For Business Owners': [
+  { name: 'List Your Business', href: '/register' },
+  { name: 'Business Dashboard', href: '/dashboard/business' },
+  { name: 'Pricing', href: '/pricing' },
+  { name: 'Careers', href: '/careers' }
+],
   'Support': [
     { name: 'Help Center', href: '/help' },
     { name: 'Contact Us', href: '/contact' },
@@ -32,8 +32,6 @@ export function Footer() {
   'Legal': [
     { name: 'Privacy Policy', href: '/privacy' },
     { name: 'Terms of Service', href: '/terms' },
-    { name: 'Cookie Policy', href: '/cookies' },
-    { name: 'Accessibility', href: '/accessibility' },
   ],
   };
 

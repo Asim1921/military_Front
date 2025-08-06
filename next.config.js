@@ -1,35 +1,31 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Remove experimental.appDir - it's deprecated in Next.js 14
-  // experimental: {
-  //   appDir: true,
-  // },
-  
   images: {
     domains: [
       'localhost',
-      'via.placeholder.com',
+      'via.placeholder.com', 
       'images.unsplash.com',
       'res.cloudinary.com',
     ],
   },
   
-  // Add fallback values to prevent undefined environment variables
+  // Fixed environment variables with correct ports
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001',
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api/v1',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
     NEXT_PUBLIC_GA_TRACKING_ID: process.env.NEXT_PUBLIC_GA_TRACKING_ID || '',
     NEXT_PUBLIC_OPENCAGE_API_KEY: process.env.NEXT_PUBLIC_OPENCAGE_API_KEY || '',
   },
   
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/:path*`,
-      },
-    ];
-  },
+  // Remove the rewrites - they're causing conflicts
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: '/api/:path*',
+  //       destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1'}/:path*`,
+  //     },
+  //   ];
+  // },
   
   async redirects() {
     return [
@@ -39,7 +35,7 @@ const nextConfig = {
         permanent: true,
       },
       {
-        source: '/business',
+        source: '/business', 
         destination: '/dashboard/business',
         permanent: true,
       },
@@ -47,7 +43,6 @@ const nextConfig = {
   },
   
   webpack: (config, { dev, isServer }) => {
-    // Fix for 'fs' module error in client-side
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -56,7 +51,6 @@ const nextConfig = {
         tls: false,
       };
     }
-
     return config;
   },
   
@@ -70,7 +64,7 @@ const nextConfig = {
             value: 'DENY',
           },
           {
-            key: 'X-Content-Type-Options',
+            key: 'X-Content-Type-Options', 
             value: 'nosniff',
           },
           {
@@ -82,15 +76,11 @@ const nextConfig = {
     ];
   },
   
-  // TypeScript configuration
   typescript: {
-    // Set to true to ignore type errors during build
     ignoreBuildErrors: true,
   },
   
-  // ESLint configuration
   eslint: {
-    // Set to true only if you want to ignore ESLint errors during build
     ignoreDuringBuilds: false,
   },
 };
