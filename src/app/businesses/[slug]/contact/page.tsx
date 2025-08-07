@@ -477,9 +477,12 @@ export default function BusinessContactPage() {
                           </svg>
                         ))}
                       </div>
-                      <span className="ml-2 text-sm text-gray-600">
-                        {business.average_rating.toFixed(1)} ({business.total_reviews} reviews)
-                      </span>
+                     <span className="ml-2 text-sm text-gray-600">
+  {typeof business.average_rating === 'number'
+    ? business.average_rating.toFixed(1)
+    : 'N/A'} ({business.total_reviews ?? 0} reviews)
+</span>
+
                     </div>
                   </div>
                 </div>
