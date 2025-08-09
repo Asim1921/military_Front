@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   FunnelIcon,
@@ -13,7 +13,10 @@ import {
   Squares2X2Icon,
   ChevronDownIcon,
   EyeIcon,
-  ArrowsUpDownIcon
+  ArrowsUpDownIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  MapPinIcon
 } from '@heroicons/react/24/outline';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, Business, BusinessCategory } from '@/lib/api';
@@ -23,11 +26,132 @@ import { BusinessCard } from '@/components/business/business-card';
 import { SearchBar } from '@/components/search/search-bar';
 import { BusinessFilters } from '../businesses/business-filters';
 import { BusinessMap } from '@/components/business/business-map';
-import { LoadingSkeleton } from '@/components/ui/loading-skeleton';
-import { Pagination } from '@/components/ui/pagination';
+
+// Loading Skeleton Component
+const LoadingSkeleton = ({ type }: { type: string }) => {
+  if (type === 'business-grid') {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="h-48 bg-gray-200 animate-pulse"></div>
+            <div className="p-6">
+              <div className="h-6 bg-gray-200 rounded animate-pulse mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse mb-4"></div>
+              <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
+};
+
+// Pagination Component
+const Pagination = ({
+  currentPage,
+  totalPages,
+  totalCount,
+  perPage,
+  onPageChange
+}: {
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  perPage: number;
+  onPageChange: (page: number) => void;
+}) => {
+  const generatePageNumbers = () => {
+    const delta = 2;
+    const range = [];
+    const rangeWithDots = [];
+
+    // If only 1 page, just return [1]
+    if (totalPages <= 1) return [1];
+
+    for (let i = Math.max(2, currentPage - delta); i <= Math.min(totalPages - 1, currentPage + delta); i++) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, '...');
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push('...', totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return rangeWithDots;
+  };
+
+  const pageNumbers = generatePageNumbers();
+  const startItem = (currentPage - 1) * perPage + 1;
+  const endItem = Math.min(currentPage * perPage, totalCount);
+
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 px-6 py-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="text-sm text-gray-700 mb-4 sm:mb-0">
+          Showing <span className="font-medium">{totalCount > 0 ? startItem : 0}</span> to{' '}
+          <span className="font-medium">{totalCount > 0 ? endItem : 0}</span> of{' '}
+          <span className="font-medium">{totalCount.toLocaleString()}</span> results
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeftIcon className="h-4 w-4 mr-1" />
+              Previous
+            </button>
+
+            <div className="flex space-x-1">
+              {pageNumbers.map((pageNumber, index) => (
+                <button
+                  key={index}
+                  onClick={() => typeof pageNumber === 'number' && onPageChange(pageNumber)}
+                  disabled={pageNumber === '...'}
+                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                    pageNumber === currentPage
+                      ? 'bg-primary-600 text-white'
+                      : pageNumber === '...'
+                      ? 'text-gray-400 cursor-default'
+                      : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Next
+              <ChevronRightIcon className="h-4 w-4 ml-1" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default function BusinessesPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [categories, setCategories] = useState<BusinessCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,36 +174,93 @@ export default function BusinessesPage() {
     emergency_service: searchParams.get('emergency_service') === 'true',
     insured: searchParams.get('insured') === 'true',
     min_rating: searchParams.get('min_rating') ? parseFloat(searchParams.get('min_rating')!) : undefined,
-    sort_by: searchParams.get('sort_by') || 'relevance'
+    sort_by: searchParams.get('sort_by') || 'relevance',
+    q: searchParams.get('q') || '' // Add search query to filters
   });
+
+  // Hero search state
+  const [heroSearchQuery, setHeroSearchQuery] = useState(searchParams.get('q') || '');
+  const [heroSearchLocation, setHeroSearchLocation] = useState(searchParams.get('location') || '');
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     fetchData();
-    fetchCategories();
   }, [searchParams, filters]);
 
   const fetchData = async () => {
     setLoading(true);
     try {
+      const currentPage = parseInt(searchParams.get('page') || '1');
+      
       const params = {
-        page: parseInt(searchParams.get('page') || '1'),
+        page: currentPage,
         per_page: 20,
-        ...filters
+        ...filters,
+        // Remove empty values to clean up the API call
+        category_ids: filters.category_ids.length > 0 ? filters.category_ids : undefined,
+        state: filters.state || undefined,
+        city: filters.city || undefined,
+        min_rating: filters.min_rating || undefined,
+        q: filters.q || undefined // Add search query
       };
 
+      // Remove undefined values
+      Object.keys(params).forEach(key => {
+        if (params[key] === undefined) {
+          delete params[key];
+        }
+      });
+
+      console.log('API Request params:', params); // Debug log
       const response = await api.businesses.list(params);
-      setBusinesses(response.data.data.businesses || []);
+      console.log('API Response:', response.data); // Debug log
       
-      if (response.data.meta) {
+      // Handle different possible response structures
+      let businessesData = [];
+      let metaData = null;
+      
+      if (response.data.success) {
+        businessesData = response.data.data?.businesses || response.data.data || [];
+        metaData = response.data.meta || response.data.data?.meta;
+      } else {
+        // Try alternate structure
+        businessesData = response.data.businesses || [];
+        metaData = response.data.meta;
+      }
+      
+      setBusinesses(businessesData);
+      
+      // Update pagination with proper data or calculate from businesses length
+      if (metaData) {
         setPagination({
-          currentPage: response.data.meta.current_page,
-          totalPages: response.data.meta.total_pages,
-          totalCount: response.data.meta.total_count,
-          perPage: response.data.meta.per_page
+          currentPage: metaData.current_page || currentPage,
+          totalPages: metaData.total_pages || Math.ceil((metaData.total_count || businessesData.length) / 20),
+          totalCount: metaData.total_count || businessesData.length,
+          perPage: metaData.per_page || 20
+        });
+      } else {
+        // Fallback pagination calculation
+        setPagination({
+          currentPage: currentPage,
+          totalPages: Math.max(1, Math.ceil(businessesData.length / 20)),
+          totalCount: businessesData.length,
+          perPage: 20
         });
       }
     } catch (error) {
       console.error('Error fetching businesses:', error);
+      // Set empty state on error
+      setBusinesses([]);
+      setPagination({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        perPage: 20
+      });
     } finally {
       setLoading(false);
     }
@@ -88,18 +269,64 @@ export default function BusinessesPage() {
   const fetchCategories = async () => {
     try {
       const response = await api.categories.list();
-      setCategories(response.data.data.categories || []);
+      if (response.data.success) {
+        setCategories(response.data.data.categories || []);
+      }
     } catch (error) {
       console.error('Error fetching categories:', error);
     }
   };
 
   const handleFilterChange = (newFilters: any) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    const updatedFilters = { ...filters, ...newFilters };
+    setFilters(updatedFilters);
+    
+    // Update URL parameters
+    const url = new URL(window.location.href);
+    
+    // Clear existing filter params
+    ['category', 'state', 'city', 'verified', 'featured', 'military_owned', 'emergency_service', 'insured', 'min_rating', 'sort_by', 'q', 'location'].forEach(param => {
+      url.searchParams.delete(param);
+    });
+    
+    // Set new filter params
+    if (updatedFilters.category_ids.length > 0) {
+      url.searchParams.set('category', updatedFilters.category_ids[0].toString());
+    }
+    if (updatedFilters.state) url.searchParams.set('state', updatedFilters.state);
+    if (updatedFilters.city) url.searchParams.set('city', updatedFilters.city);
+    if (updatedFilters.verified) url.searchParams.set('verified', 'true');
+    if (updatedFilters.featured) url.searchParams.set('featured', 'true');
+    if (updatedFilters.military_owned) url.searchParams.set('military_owned', 'true');
+    if (updatedFilters.emergency_service) url.searchParams.set('emergency_service', 'true');
+    if (updatedFilters.insured) url.searchParams.set('insured', 'true');
+    if (updatedFilters.min_rating) url.searchParams.set('min_rating', updatedFilters.min_rating.toString());
+    if (updatedFilters.sort_by !== 'relevance') url.searchParams.set('sort_by', updatedFilters.sort_by);
+    if (updatedFilters.q) url.searchParams.set('q', updatedFilters.q);
+    if (heroSearchLocation) url.searchParams.set('location', heroSearchLocation);
+    
+    // Reset to page 1 when filters change
+    url.searchParams.delete('page');
+    
+    router.push(url.toString(), { scroll: false });
+  };
+
+  const handlePageChange = (page: number) => {
+    const url = new URL(window.location.href);
+    if (page === 1) {
+      url.searchParams.delete('page');
+    } else {
+      url.searchParams.set('page', page.toString());
+    }
+    
+    router.push(url.toString(), { scroll: false });
+    
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const clearFilters = () => {
-    setFilters({
+    const clearedFilters = {
       category_ids: [],
       state: '',
       city: '',
@@ -109,8 +336,106 @@ export default function BusinessesPage() {
       emergency_service: false,
       insured: false,
       min_rating: undefined,
-      sort_by: 'relevance'
+      sort_by: 'relevance',
+      q: '' // Clear search query too
+    };
+    
+    setFilters(clearedFilters);
+    setHeroSearchQuery('');
+    setHeroSearchLocation('');
+    
+    // Clear URL parameters
+    const url = new URL(window.location.href);
+    ['category', 'state', 'city', 'verified', 'featured', 'military_owned', 'emergency_service', 'insured', 'min_rating', 'sort_by', 'page', 'q', 'location'].forEach(param => {
+      url.searchParams.delete(param);
     });
+    
+    router.push(url.toString(), { scroll: false });
+  };
+
+  // Hero search handlers
+  const handleHeroSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Update filters with search query and location
+    const newFilters = {
+      ...filters,
+      q: heroSearchQuery.trim(),
+      // Parse location into city/state if possible
+      city: heroSearchLocation.trim() ? parseLocationToCity(heroSearchLocation.trim()) : '',
+      state: heroSearchLocation.trim() ? parseLocationToState(heroSearchLocation.trim()) : ''
+    };
+    
+    handleFilterChange(newFilters);
+  };
+
+  const handleServiceTagClick = (service: string) => {
+    setHeroSearchQuery(service);
+    const newFilters = {
+      ...filters,
+      q: service
+    };
+    handleFilterChange(newFilters);
+  };
+
+  const getCurrentLocation = () => {
+    setIsGettingLocation(true);
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          
+          try {
+            // Use a simple reverse geocoding service or implement your own
+            // For now, we'll use a placeholder that you can replace with your preferred service
+            const response = await fetch(
+              `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`
+            );
+            const data = await response.json();
+            
+            if (data.city && data.principalSubdivision) {
+              const locationString = `${data.city}, ${data.principalSubdivisionCode}`;
+              setHeroSearchLocation(locationString);
+            }
+          } catch (error) {
+            console.error('Error getting location name:', error);
+            // Fallback to coordinates
+            setHeroSearchLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+          
+          setIsGettingLocation(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setIsGettingLocation(false);
+          // You could show a toast notification here
+        }
+      );
+    } else {
+      setIsGettingLocation(false);
+      console.error('Geolocation is not supported by this browser');
+    }
+  };
+
+  // Helper functions to parse location
+  const parseLocationToCity = (location: string): string => {
+    // Simple parsing - you can make this more sophisticated
+    const parts = location.split(',');
+    return parts[0]?.trim() || '';
+  };
+
+  const parseLocationToState = (location: string): string => {
+    // Simple parsing - you can make this more sophisticated
+    const parts = location.split(',');
+    if (parts.length > 1) {
+      const statePart = parts[1]?.trim();
+      // Extract state code (last 2 characters if it looks like a state code)
+      if (statePart && statePart.length >= 2) {
+        return statePart.slice(-2).toUpperCase();
+      }
+    }
+    return '';
   };
 
   const getActiveFilterCount = () => {
@@ -132,6 +457,10 @@ export default function BusinessesPage() {
   ];
 
   const currentSortOption = sortOptions.find(option => option.value === filters.sort_by);
+
+  // Calculate display counts
+  const startCount = pagination.totalCount > 0 ? (pagination.currentPage - 1) * pagination.perPage + 1 : 0;
+  const endCount = Math.min(pagination.currentPage * pagination.perPage, pagination.totalCount);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -165,55 +494,100 @@ export default function BusinessesPage() {
             </p>
           </motion.div>
 
-          {/* Main Search Container */}
-              <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
-                <div className="flex flex-col lg:flex-row">
-                  {/* Service Search Input */}
-                  <div className="flex-1 relative">
-                    <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                      <MagnifyingGlassIcon className="h-6 w-6 text-gray-400" />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="Search for services (plumbing, legal, HVAC...)"
-                      className="w-full h-16 pl-16 pr-6 text-lg text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none"
-                    />
+          {/* Hero Search */}
+          <motion.div 
+            className="max-w-4xl mx-auto mb-12"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            {/* Main Search Container */}
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+              <form onSubmit={handleHeroSearch} className="flex flex-col lg:flex-row">
+                {/* Service Search Input */}
+                <div className="flex-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                    <MagnifyingGlassIcon className="h-6 w-6 text-gray-400" />
                   </div>
-                  
-                  {/* Divider */}
-                  <div className="hidden lg:block w-px bg-gray-200 my-3"></div>
-                  
-                  {/* Location Input */}
-                  <div className="lg:w-80 relative">
-                    <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                      {/* <MapPinIcon className="h-6 w-6 text-gray-400" /> */}
-                    </div>
-                    <input
-                      type="text"
-                      placeholder="City, State or ZIP"
-                      className="w-full h-16 pl-16 pr-20 text-lg text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none lg:border-l lg:border-gray-200"
-                    />
-                    {/* GPS Button */}
-                    <button className="absolute inset-y-0 right-6 flex items-center text-primary-600 hover:text-primary-700 transition-colors">
-                      <span className="text-sm font-medium">GPS</span>
-                    </button>
-                  </div>
-                  
-                  {/* Search Button */}
-                  <div className="lg:w-auto">
-                    <button className="w-full lg:w-auto h-16 px-8 lg:px-12 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold text-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-200">
-                      Search
-                    </button>
-                  </div>
+                  <input
+                    type="text"
+                    value={heroSearchQuery}
+                    onChange={(e) => setHeroSearchQuery(e.target.value)}
+                    placeholder="Search for services (plumbing, legal, HVAC...)"
+                    className="w-full h-16 pl-16 pr-6 text-lg text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none"
+                  />
                 </div>
-              </div>
+                
+                {/* Divider */}
+                <div className="hidden lg:block w-px bg-gray-200 my-3"></div>
+                
+                {/* Location Input */}
+                <div className="lg:w-80 relative">
+                  <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                    <MapPinIcon className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    value={heroSearchLocation}
+                    onChange={(e) => setHeroSearchLocation(e.target.value)}
+                    placeholder="City, State or ZIP"
+                    className="w-full h-16 pl-16 pr-20 text-lg text-gray-900 placeholder-gray-500 bg-transparent border-0 focus:ring-0 focus:outline-none lg:border-l lg:border-gray-200"
+                  />
+                  {/* GPS Button */}
+                  <button 
+                    type="button"
+                    onClick={getCurrentLocation}
+                    disabled={isGettingLocation}
+                    className="absolute inset-y-0 right-6 flex items-center text-primary-600 hover:text-primary-700 transition-colors disabled:opacity-50"
+                  >
+                    {isGettingLocation ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
+                    ) : (
+                      <span className="text-sm font-medium">GPS</span>
+                    )}
+                  </button>
+                </div>
+                
+                {/* Search Button */}
+                <div className="lg:w-auto">
+                  <button 
+                    type="submit"
+                    className="w-full lg:w-auto h-16 px-8 lg:px-12 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white font-semibold text-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-primary-200"
+                  >
+                    Search
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Popular Services Tags */}
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              {[
+                'Plumbing', 
+                'HVAC', 
+                'Legal Services', 
+                'Electrical', 
+                'Security', 
+                'Event Planning'
+              ].map((service) => (
+                <button
+                  key={service}
+                  type="button"
+                  onClick={() => handleServiceTagClick(service)}
+                  className="px-4 py-2 bg-white/10 backdrop-blur-sm text-white border border-white/20 rounded-full hover:bg-white/20 hover:border-white/30 transition-all duration-200 text-sm font-medium"
+                >
+                  {service}
+                </button>
+              ))}
+            </div>
+          </motion.div>
 
           {/* Quick Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="flex flex-wrap justify-center gap-8 text-sm"
+            className="flex flex-wrap justify-center gap-8 text-sm mt-8"
           >
             <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
               <div className="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
@@ -270,8 +644,15 @@ export default function BusinessesPage() {
                   <div className="flex items-center gap-2 text-sm">
                     <EyeIcon className="h-4 w-4 text-gray-400" />
                     <span className="text-gray-600">
-                      Showing <span className="font-semibold text-gray-900">{businesses.length}</span> of{' '}
-                      <span className="font-semibold text-gray-900">{pagination.totalCount.toLocaleString()}</span> businesses
+                      Showing{' '}
+                      <span className="font-semibold text-gray-900">
+                        {loading ? '...' : (pagination.totalCount === 0 ? '0' : `${startCount}-${endCount}`)}
+                      </span>{' '}
+                      of{' '}
+                      <span className="font-semibold text-gray-900">
+                        {loading ? '...' : pagination.totalCount.toLocaleString()}
+                      </span>{' '}
+                      businesses
                     </span>
                   </div>
                 </div>
@@ -414,7 +795,7 @@ export default function BusinessesPage() {
                 </div>
 
                 {/* Enhanced Empty State */}
-                {businesses.length === 0 && (
+                {businesses.length === 0 && !loading && (
                   <div className="text-center py-16">
                     <div className="max-w-md mx-auto">
                       <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -442,20 +823,15 @@ export default function BusinessesPage() {
                   </div>
                 )}
 
-                {/* Pagination */}
+                {/* Pagination - ALWAYS SHOW IF WE HAVE BUSINESSES */}
                 {businesses.length > 0 && (
-                  <div className="flex justify-center">
+                  <div className="flex justify-center mt-8">
                     <Pagination
                       currentPage={pagination.currentPage}
                       totalPages={pagination.totalPages}
                       totalCount={pagination.totalCount}
                       perPage={pagination.perPage}
-                      onPageChange={(page) => {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('page', page.toString());
-                        window.history.pushState({}, '', url.toString());
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
+                      onPageChange={handlePageChange}
                     />
                   </div>
                 )}
