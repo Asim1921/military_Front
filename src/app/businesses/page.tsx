@@ -164,24 +164,37 @@ export default function BusinessesPage() {
     perPage: 20
   });
 
-  const [filters, setFilters] = useState({
-    category_ids: searchParams.get('category') ? [parseInt(searchParams.get('category')!)] : [],
-    state: searchParams.get('state') || '',
-    city: searchParams.get('city') || '',
-    verified: searchParams.get('verified') === 'true',
-    featured: searchParams.get('featured') === 'true',
-    military_owned: searchParams.get('military_owned') === 'true',
-    emergency_service: searchParams.get('emergency_service') === 'true',
-    insured: searchParams.get('insured') === 'true',
-    min_rating: searchParams.get('min_rating') ? parseFloat(searchParams.get('min_rating')!) : undefined,
-    sort_by: searchParams.get('sort_by') || 'relevance',
-    q: searchParams.get('q') || '' // Add search query to filters
-  });
+  // Initialize filters from URL parameters
+  const initializeFilters = () => {
+    return {
+      category_ids: searchParams.get('category') ? [parseInt(searchParams.get('category')!)] : [],
+      state: searchParams.get('state') || '',
+      city: searchParams.get('city') || '',
+      verified: searchParams.get('verified') === 'true',
+      featured: searchParams.get('featured') === 'true',
+      military_owned: searchParams.get('military_owned') === 'true',
+      emergency_service: searchParams.get('emergency_service') === 'true',
+      insured: searchParams.get('insured') === 'true',
+      min_rating: searchParams.get('min_rating') ? parseFloat(searchParams.get('min_rating')!) : undefined,
+      sort_by: searchParams.get('sort_by') || 'relevance',
+      q: searchParams.get('q') || '' // Add search query to filters
+    };
+  };
+
+  const [filters, setFilters] = useState(initializeFilters);
 
   // Hero search state
   const [heroSearchQuery, setHeroSearchQuery] = useState(searchParams.get('q') || '');
   const [heroSearchLocation, setHeroSearchLocation] = useState(searchParams.get('location') || '');
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const newFilters = initializeFilters();
+    setFilters(newFilters);
+    setHeroSearchQuery(searchParams.get('q') || '');
+    setHeroSearchLocation(searchParams.get('location') || '');
+  }, [searchParams]);
 
   useEffect(() => {
     fetchCategories();
@@ -216,7 +229,17 @@ export default function BusinessesPage() {
       });
 
       console.log('API Request params:', params); // Debug log
-      const response = await api.businesses.list(params);
+      
+      // Use search endpoint if there's a query, otherwise use list endpoint
+      let response;
+      if (filters.q && filters.q.trim()) {
+        console.log('Using search endpoint with query:', filters.q);
+        response = await api.businesses.search(params);
+      } else {
+        console.log('Using list endpoint');
+        response = await api.businesses.list(params);
+      }
+      
       console.log('API Response:', response.data); // Debug log
       
       // Handle different possible response structures
@@ -231,6 +254,9 @@ export default function BusinessesPage() {
         businessesData = response.data.businesses || [];
         metaData = response.data.meta;
       }
+      
+      console.log('Processed businesses:', businessesData.length, 'businesses');
+      console.log('Meta data:', metaData);
       
       setBusinesses(businessesData);
       
@@ -486,11 +512,13 @@ export default function BusinessesPage() {
             className="text-center mb-8"
           >
             <h1 className="text-4xl md:text-5xl font-bold font-heading mb-6">
-              Veteran Business Directory
+              {filters.q ? `Search Results for "${filters.q}"` : 'Veteran Business Directory'}
             </h1>
             <p className="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
-              Browse and connect with trusted military veteran-owned businesses across all categories. 
-              Supporting those who served while getting quality service.
+              {filters.q 
+                ? `Found businesses matching "${filters.q}" from trusted military veteran-owned providers.`
+                : 'Browse and connect with trusted military veteran-owned businesses across all categories. Supporting those who served while getting quality service.'
+              }
             </p>
           </motion.div>
 
@@ -708,6 +736,11 @@ export default function BusinessesPage() {
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-between">
                     <div className="flex flex-wrap gap-2">
+                      {filters.q && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Search: "{filters.q}"
+                        </span>
+                      )}
                       {filters.military_owned && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-military-100 text-military-800">
                           Military Owned
@@ -736,6 +769,11 @@ export default function BusinessesPage() {
                       {filters.state && (
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           {filters.state}
+                        </span>
+                      )}
+                      {filters.city && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          {filters.city}
                         </span>
                       )}
                       {filters.min_rating && (
